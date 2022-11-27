@@ -10,7 +10,7 @@ app.use(express.json());
 
 // Mongodb section
 
-const uri = `mongodb+srv://proportal:nQKLRP1KcvgmytNm@cluster0.oczpomj.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_User}:${process.env.DB_Pass}@cluster0.oczpomj.mongodb.net/?retryWrites=true&w=majority`;
 console.log(uri);
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -28,18 +28,27 @@ async function run() {
       .collection("bookings");
 
 
-
+// catagory get
     app.get("/products", async (req, res) => {
       const query = {};
       const catagry = await productsCollection.find(query).toArray();
       res.send(catagry);
     });
-// api convension
+
+
+// modal order post
 app.post('/bookings',async(req,res)=>{
 const booking=req.body;
 console.log(booking);
 const result=await bookingscollection.insertOne(booking);
 res.send(result);
+});
+// modal information get
+app.get('/bookings',async(req,res)=>{
+const email=req.query.email;
+const query={email:email};
+const bookings=await bookingscollection.find(query).toArray();
+res.send(bookings);
 })
 
 
