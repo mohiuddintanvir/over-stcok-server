@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 require("dotenv").config();
+const jwt=require('jsonwebtoken')
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -26,6 +27,9 @@ async function run() {
     const bookingscollection = client
       .db("overstockportal")
       .collection("bookings");
+    const userscollection = client
+      .db("overstockportal")
+      .collection("users");
 
 
 // catagory get
@@ -46,9 +50,31 @@ res.send(result);
 // modal information get
 app.get('/bookings',async(req,res)=>{
 const email=req.query.email;
+console.log('token',req.headers.authorization);
 const query={email:email};
 const bookings=await bookingscollection.find(query).toArray();
 res.send(bookings);
+// jwt token
+app.get('/jwt',async(req,res)=>{
+  const email=req.query.email;
+  const query={email:email};
+  const user=await userscollection.findOne(query);
+  if(user){
+    const token=jwt.sign({email},process.env.ACCESS_TOKEN,{expiresIn:'1h'})
+    return res.send({accessToken:token});
+  }
+  console.log(user);
+  res.status(403).send({accessToken:''})
+})
+
+// all user 
+
+app.post('/users',async(req,res)=>{
+const user=req.body;
+const result=await userscollection.insertOne(user);
+res.send(result);
+})
+
 })
 
 
