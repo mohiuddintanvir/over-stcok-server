@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -18,6 +18,24 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+// JWT verify function
+function verifyJWT(req,res,next){
+  console.log('token inside verify jwt',req.headers.authorization);
+  const authHeader=req.headers.authorization;
+  if(!authHeader){
+    return res.status(401).send('unauthorized access')
+   
+  } 
+  const token=authHeader.split('')[1];
+  jwt.verify(token,process.env.ACCESS_TOKEN,function(err,decoded){
+    if(err){
+      return res.status(403).send({massage:'forbidden access'})
+    }
+    req.decoded=decoded;
+    next()
+  })
+}
 
 async function run() {
   try {
@@ -50,7 +68,10 @@ res.send(result);
 // modal information get
 app.get('/bookings',async(req,res)=>{
 const email=req.query.email;
-console.log('token',req.headers.authorization);
+// const decodedEmail=req.decoded.email;
+// if(email!==decodedEmail){
+//   return res.status(403).send({massage:'forbiden access'})
+// }
 const query={email:email};
 const bookings=await bookingscollection.find(query).toArray();
 res.send(bookings);
@@ -72,6 +93,24 @@ app.get('/jwt',async(req,res)=>{
 app.post('/users',async(req,res)=>{
 const user=req.body;
 const result=await userscollection.insertOne(user);
+res.send(result);
+});
+app.get("/users", async (req, res) => {
+  const query = {};
+  const catagry = await userscollection.find(query).toArray();
+  res.send(catagry);
+});
+
+app.put('/users/admin/:id',async(req,res)=>{
+const id=req.params.id;
+const filter={_id:ObjectId(id)};
+const option={upsert:true};
+const updateDoc={
+  $set:{
+    role:'admin'
+  }
+}
+const result=await userscollection.updateOne(filter,updateDoc,option)
 res.send(result);
 })
 
