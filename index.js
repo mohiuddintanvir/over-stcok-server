@@ -57,6 +57,12 @@ async function run() {
       res.send(catagry);
     });
 
+    app.get("/products/:id", async (req, res) =>{
+      const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const product = await productsCollection.findOne(query);
+            res.send(product)
+    })
 
 // modal order post
 app.post('/bookings',async(req,res)=>{
@@ -100,6 +106,17 @@ app.get("/users", async (req, res) => {
   const catagry = await userscollection.find(query).toArray();
   res.send(catagry);
 });
+
+// admin set
+app.get('/users/admin/:email',async(req,res)=>{
+const email=req.params.email;
+  const query={email};
+  const user=await userscollection.findOne(query);
+  res.send({isAdmin: user?.role==='admin'});
+})
+
+
+
 
 app.put('/users/admin/:id',async(req,res)=>{
 const id=req.params.id;
