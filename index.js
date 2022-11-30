@@ -20,31 +20,23 @@ const client = new MongoClient(uri, {
 });
 
 // JWT verify function
-function verifyJWT(req,res,next){
-  console.log('token inside verify jwt',req.headers.authorization);
-  const authHeader=req.headers.authorization;
-  if(!authHeader){
-    return res.status(401).send('unauthorized access')
-   
-  } 
-  const token=authHeader.split('')[1];
-  jwt.verify(token,process.env.ACCESS_TOKEN,function(err,decoded){
-    if(err){
-      return res.status(403).send({massage:'forbidden access'})
-    }
-    req.decoded=decoded;
-    next()
-  })
-}
+
 
 async function run() {
   try {
     const productsCollection = client
       .db("overstockportal")
       .collection("products");
+
+      const categoriesCollection = client
+      .db("overstockportal")
+      .collection("categories");
+      
     const bookingscollection = client
       .db("overstockportal")
       .collection("bookings");
+
+
     const userscollection = client
       .db("overstockportal")
       .collection("users");
@@ -62,7 +54,22 @@ async function run() {
             const query = { _id: ObjectId(id) }
             const product = await productsCollection.findOne(query);
             res.send(product)
-    })
+    });
+    // for spacific catagory
+    app.get('/categories/:name', async (req, res) => {
+      const name = req.params.name;
+      const query = { catagory_name: (name) };
+      const category = await categoriesCollection.find(query).toArray();
+      res.send(category);
+
+  });
+// add products code
+app.post('/categories',async(req,res)=>{
+  const booking=req.body;
+  console.log(booking);
+  const result=await categoriesCollection.insertOne(booking);
+  res.send(result);
+  });
 
 // modal order post
 app.post('/bookings',async(req,res)=>{
@@ -74,25 +81,19 @@ res.send(result);
 // modal information get
 app.get('/bookings',async(req,res)=>{
 const email=req.query.email;
-// const decodedEmail=req.decoded.email;
-// if(email!==decodedEmail){
-//   return res.status(403).send({massage:'forbiden access'})
-// }
+
 const query={email:email};
 const bookings=await bookingscollection.find(query).toArray();
 res.send(bookings);
-// jwt token
-app.get('/jwt',async(req,res)=>{
-  const email=req.query.email;
-  const query={email:email};
-  const user=await userscollection.findOne(query);
-  if(user){
-    const token=jwt.sign({email},process.env.ACCESS_TOKEN,{expiresIn:'1h'})
-    return res.send({accessToken:token});
-  }
-  console.log(user);
-  res.status(403).send({accessToken:''})
 })
+
+app.get('/bookings/:id',async(req,res)=>{
+const id=req.params.id;
+const query={_id:ObjectId(id)}
+const booking=await bookingscollection.findOne(query)
+res.send(booking);
+  })
+
 
 // all user 
 
@@ -106,6 +107,18 @@ app.get("/users", async (req, res) => {
   const catagry = await userscollection.find(query).toArray();
   res.send(catagry);
 });
+app.delete('/users/:id',async(req,res)=>{
+const id=req.params.id;
+const filter={_id:ObjectId(id)}
+const result=await userscollection.deleteOne(filter);
+res.send(result);
+})
+
+
+
+
+// product collection get by id
+
 
 // admin set
 app.get('/users/admin/:email',async(req,res)=>{
@@ -131,7 +144,18 @@ const result=await userscollection.updateOne(filter,updateDoc,option)
 res.send(result);
 })
 
-})
+
+app.get('/addprice',async(req,res)=>{
+  const filter={}
+  const options={upsert:true}
+  const updateDoc={
+    $set:{
+      price:99
+    }
+  }
+const result=await bookingscollection.updateMany(filter,updateDoc,options);
+res.send(result)
+  })
 
 
   } 
