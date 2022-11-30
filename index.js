@@ -92,6 +92,23 @@ const bookings=await bookingscollection.find(query).toArray();
 res.send(bookings);
 })
 
+// my products data email wise devided
+app.get('/categories',async(req,res)=>{
+  const email=req.query.email;
+  
+  const query={email:email};
+  const bookings=await categoriesCollection.find(query).toArray();
+  res.send(bookings);
+  })
+
+
+
+
+
+
+
+
+
 app.get('/bookings/:id',async(req,res)=>{
 const id=req.params.id;
 const query={_id:ObjectId(id)}
