@@ -21,7 +21,7 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-// JWT verify function
+
 
 
 async function run() {
@@ -42,6 +42,9 @@ async function run() {
     const userscollection = client
       .db("overstockportal")
       .collection("users");
+    const paymentscollection = client
+      .db("overstockportal")
+      .collection("payments");
 
 
 // catagory get
@@ -110,11 +113,30 @@ const paymentIntent = await stripe.paymentIntents.create({
     "card"
   ],
 })
+console.log(paymentIntent.client_secret)
 res.send({
-  clientSecret: paymentIntent.client_secret,
+  clientSecret: paymentIntent.client_secret, 
+});
+ }) ;
+
+
+
+app.post('/payments',async(req,res)=>{
+const payment=req.body;
+const result=await paymentscollection.insertOne(payment);
+const id=payment.bookingId;
+const filter={_id:ObjectId(id)}
+const updateDoc={
+  $set:{
+    paid:true,
+  }
+}
+const updateresult=await bookingscollection.updateOne(filter,updateDoc)
+res.send(result);
 });
 
-  })
+
+
 
 
 
